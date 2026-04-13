@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NestFlow AI — WhatsApp Lead Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0a0e1a;
+    --navy-mid: #111827;
+    --navy-light: #1a2340;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-pale: #f5e6b8;
+    --white: #f8f6f0;
+    --muted: rgba(248,246,240,0.5);
+    --green: #25D366;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    height: 100dvh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    gap: 4px;
+    padding: 10px 16px 0;
+  }
+  .progress-seg {
+    height: 2.5px;
+    flex: 1;
+    background: rgba(201,168,76,0.25);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-seg .fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-seg.done .fill { width: 100%; }
+  .progress-seg.active .fill { width: 100%; transition: width 5s linear; }
+
+  /* SLIDE CONTAINER */
+  .slides-wrap {
+    position: relative;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 28px 80px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: transform 0.45s cubic-bezier(0.77,0,0.18,1), opacity 0.45s ease;
+    pointer-events: none;
+    text-align: center;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.prev {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  /* TAP ZONES */
+  .tap-zone {
+    position: fixed;
+    top: 30px;
+    height: 52%;
+    z-index: 50;
+    width: 30%;
+    cursor: pointer;
+  }
+  .tap-zone.left { left: 0; }
+  .tap-zone.right { right: 0; }
+
+  /* NAV DOTS */
+  .nav-dots {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 100;
+  }
+  .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.3);
+    transition: all 0.3s;
+  }
+  .dot.active {
+    background: var(--gold);
+    width: 18px;
+    border-radius: 3px;
+  }
+
+  /* ═══ SLIDE 1 — HOOK ═══ */
+  #s1 { background: var(--navy); }
+  #s1::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  #s1::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .s1-tag {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 28px;
+  }
+  .s1-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 46px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 22px;
+    color: var(--white);
+  }
+  .s1-headline em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+  .s1-sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 300px;
+  }
+  .moon-icon {
+    font-size: 52px;
+    margin-bottom: 24px;
+    display: block;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.4));
+  }
+
+  /* ═══ SLIDE 2 — PROBLEM ═══ */
+  #s2 { background: var(--navy-mid); }
+  .prob-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+    line-height: 1.15;
+  }
+  .prob-sub {
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .prob-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+  }
+  .prob-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .prob-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .prob-text strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+  .prob-text span {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ═══ SLIDE 3 — COST ═══ */
+  #s3 { background: var(--navy); }
+  #s3::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(201,168,76,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cost-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .cost-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 72px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 40px rgba(201,168,76,0.3);
+  }
+  .cost-unit {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .cost-divider {
+    width: 40px;
+    height: 1px;
+    background: rgba(201,168,76,0.4);
+    margin: 0 auto 28px;
+  }
+  .cost-context {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-style: italic;
+    color: var(--white);
+    line-height: 1.45;
+    max-width: 280px;
+  }
+  .cost-context strong {
+    color: var(--gold-light);
+    font-style: normal;
+  }
+  .cost-pills {
+    display: flex;
+    gap: 8px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .cost-pill {
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--gold-light);
+  }
+
+  /* ═══ SLIDE 4 — MEET NESTFLOW ═══ */
+  #s4 { background: linear-gradient(160deg, #0a0e1a 0%, #0f1825 100%); }
+  .brand-logo {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(201,168,76,0.3);
+  }
+  .brand-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .brand-name span { color: var(--gold); }
+  .brand-tagline {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .brand-desc {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--white);
+    max-width: 300px;
+    margin-bottom: 32px;
+  }
+  .brand-desc strong { color: var(--gold-light); }
+  .wa-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(37,211,102,0.1);
+    border: 1px solid rgba(37,211,102,0.3);
+    border-radius: 24px;
+    padding: 8px 18px;
+    font-size: 13px;
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  /* ═══ SLIDE 5 — HOW IT WORKS ═══ */
+  #s5 { background: var(--navy-mid); }
+  .how-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .how-sub {
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .how-steps {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .how-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    text-align: left;
+    position: relative;
+  }
+  .how-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 44px;
+    height: calc(100% - 8px);
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(201,168,76,0.4), rgba(201,168,76,0.1));
+  }
+  .step-num {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--navy);
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .step-body {
+    padding-bottom: 28px;
+  }
+  .step-body strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+  .step-body span {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .step-emoji { margin-right: 6px; }
+
+  /* ═══ SLIDE 6 — TIME SAVED ═══ */
+  #s6 { background: var(--navy); }
+  #s6::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.07) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .time-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .time-sub {
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .compare-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .compare-col {
+    border-radius: 14px;
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .compare-col.before {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .compare-col.after {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.25);
+  }
+  .compare-col .col-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .before .col-label { color: rgba(255,255,255,0.35); }
+  .after .col-label { color: var(--gold); }
+  .stat-row {
+    margin-bottom: 10px;
+  }
+  .stat-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .before .stat-val { color: rgba(255,255,255,0.4); }
+  .after .stat-val { color: var(--gold-light); }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .time-note {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+    max-width: 280px;
+    line-height: 1.6;
+  }
+  .time-note strong { color: var(--gold-light); font-style: normal; }
+
+  /* ═══ SLIDE 7 — WHAT YOU GET ═══ */
+  #s7 { background: var(--navy-mid); }
+  .feat-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .feat-sub {
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 26px;
+  }
+  .feat-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .feat-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: left;
+  }
+  .feat-card .fc-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+  .feat-card .fc-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+  .feat-card .fc-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ═══ SLIDE 8 — TESTIMONIALS ═══ */
+  #s8 { background: var(--navy); padding: 55px 20px 80px; justify-content: flex-start; overflow: hidden; }
+  #s8::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 200px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .testi-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+  .testi-sub {
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .testi-scroll {
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100dvh - 180px);
+  }
+  .testi-scroll::-webkit-scrollbar { display: none; }
+  .testi-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 16px;
+    padding: 16px 14px;
+    width: 100%;
+    text-align: left;
+    flex-shrink: 0;
+  }
+  .testi-stars {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+  .testi-quote {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--white);
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+  .testi-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+  .testi-agency {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .testi-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy-light), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 10px;
+    border: 1.5px solid rgba(201,168,76,0.3);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ═══ SLIDE 9 — CTA ═══ */
+  #s9 { background: var(--navy); }
+  #s9::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(201,168,76,0.1) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .cta-eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+  }
+  .cta-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  .cta-headline em { color: var(--gold-light); font-style: italic; }
+  .cta-sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 290px;
+    margin-bottom: 32px;
+  }
+  .pricing-box {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 16px;
+    padding: 18px 24px;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+  .pricing-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .pricing-row:last-child { margin-bottom: 0; }
+  .pricing-label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .pricing-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gold-light);
+  }
+  .pricing-divider {
+    height: 1px;
+    background: rgba(201,168,76,0.15);
+    margin: 10px 0;
+  }
+  .wa-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    width: 100%;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(37,211,102,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .wa-btn:active { transform: scale(0.97); box-shadow: 0 4px 12px rgba(37,211,102,0.2); }
+  .wa-btn svg { width: 22px; height: 22px; fill: white; flex-shrink: 0; }
+
+  /* COUNTER ANIMATION */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .slide.active .anim-item {
+    animation: fadeUp 0.5s ease forwards;
+  }
+  .anim-item { opacity: 0; }
+  .anim-item:nth-child(1) { animation-delay: 0.1s; }
+  .anim-item:nth-child(2) { animation-delay: 0.2s; }
+  .anim-item:nth-child(3) { animation-delay: 0.3s; }
+  .anim-item:nth-child(4) { animation-delay: 0.4s; }
+  .anim-item:nth-child(5) { animation-delay: 0.5s; }
+  .anim-item:nth-child(6) { animation-delay: 0.6s; }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- TAP ZONES -->
+<div class="tap-zone left" onclick="prevSlide()"></div>
+<div class="tap-zone right" onclick="nextSlide()"></div>
+
+<!-- NAV DOTS -->
+<div class="nav-dots" id="navDots"></div>
+
+<!-- SLIDES WRAP -->
+<div class="slides-wrap">
+
+  <!-- SLIDE 1: HOOK -->
+  <div class="slide" id="s1">
+    <span class="moon-icon">🌙</span>
+    <div class="s1-tag">For Real Estate Agencies</div>
+    <h1 class="s1-headline">Your agents are losing leads<br><em>while they sleep.</em></h1>
+    <p class="s1-sub">Every unanswered WhatsApp message is a commission walking out the door. There's a smarter way.</p>
+  </div>
+
+  <!-- SLIDE 2: PROBLEM -->
+  <div class="slide" id="s2">
+    <p class="prob-sub">The Real Problem</p>
+    <h2 class="prob-title">Your team can't keep up with every lead.</h2>
+    <div class="prob-list">
+      <div class="prob-item anim-item">
+        <span class="prob-icon">⏱️</span>
+        <div class="prob-text">
+          <strong>Slow Response Time</strong>
+          <span>Leads expect a reply in under 5 minutes. Most agencies respond in hours — or not at all.</span>
+        </div>
+      </div>
+      <div class="prob-item anim-item">
+        <span class="prob-icon">📋</span>
+        <div class="prob-text">
+          <strong>Manual Qualification</strong>
+          <span>Agents spend hours asking the same questions — budget, location, timeline — to every single lead.</span>
+        </div>
+      </div>
+      <div class="prob-item anim-item">
+        <span class="prob-icon">🔁</span>
+        <div class="prob-text">
+          <strong>Zero Follow-Up System</strong>
+          <span>Most leads need 3–5 follow-ups to convert. Your team forgets. The lead goes cold.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: COST -->
+  <div class="slide" id="s3">
+    <p class="cost-label">The Real Cost of Ignoring a Lead</p>
+    <div class="cost-amount" id="costCounter">₹0</div>
+    <p class="cost-unit">average commission lost per missed lead</p>
+    <div class="cost-divider"></div>
+    <p class="cost-context">If your agency misses just <strong>3 leads a month</strong>, that's <strong>₹2.4 lakh</strong> disappearing silently — every single month.</p>
+    <div class="cost-pills">
+      <div class="cost-pill">₹80K × 3 leads</div>
+      <div class="cost-pill">= ₹2.4L/month lost</div>
+      <div class="cost-pill">₹28.8L/year</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: MEET NESTFLOW -->
+  <div class="slide" id="s4">
+    <div class="brand-logo">🤖</div>
+    <h2 class="brand-name">Nest<span>Flow</span> AI</h2>
+    <p class="brand-tagline">WhatsApp Lead Automation</p>
+    <p class="brand-desc">An intelligent WhatsApp bot that <strong>qualifies every lead automatically</strong>, 24/7 — and sends your agent only the HOT ones, ready to close.</p>
+    <div class="wa-badge">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Runs 24/7 on WhatsApp
+    </div>
+  </div>
+
+  <!-- SLIDE 5: HOW IT WORKS -->
+  <div class="slide" id="s5">
+    <p class="how-sub">How It Works</p>
+    <h2 class="how-title">3 Steps to a Qualified Lead</h2>
+    <div class="how-steps">
+      <div class="how-step anim-item">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong><span class="step-emoji">📲</span>Lead Sends a WhatsApp</strong>
+          <span>From any source — 99acres, MagicBricks, Instagram, referral — the bot greets them instantly, 24/7, no delays.</span>
+        </div>
+      </div>
+      <div class="how-step anim-item">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong><span class="step-emoji">🤖</span>Bot Qualifies Automatically</strong>
+          <span>Collects budget, location, property type, and timeline using simple buttons — no typing, no confusion.</span>
+        </div>
+      </div>
+      <div class="how-step anim-item">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong><span class="step-emoji">🔥</span>Agent Gets HOT Lead Alert</strong>
+          <span>Only serious, qualified buyers reach your agents — pre-scored and ready for a closing call. No time wasted.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: TIME SAVED -->
+  <div class="slide" id="s6">
+    <p class="time-sub">The Difference</p>
+    <h2 class="time-title">Before vs. After NestFlow AI</h2>
+    <div class="compare-grid">
+      <div class="compare-col before">
+        <p class="col-label">Before</p>
+        <div class="stat-row anim-item">
+          <div class="stat-val" data-target="4" data-prefix="" data-suffix="hrs">—</div>
+          <div class="stat-label">avg. response time</div>
+        </div>
+        <div class="stat-row anim-item">
+          <div class="stat-val" data-target="40" data-prefix="" data-suffix="%">—</div>
+          <div class="stat-label">leads followed up</div>
+        </div>
+        <div class="stat-row anim-item">
+          <div class="stat-val" data-target="3" data-prefix="" data-suffix="hrs/day">—</div>
+          <div class="stat-label">wasted on cold leads</div>
+        </div>
+      </div>
+      <div class="compare-col after">
+        <p class="col-label">After</p>
+        <div class="stat-row anim-item">
+          <div class="stat-val" data-target="30" data-prefix="" data-suffix="sec">—</div>
+          <div class="stat-label">instant response</div>
+        </div>
+        <div class="stat-row anim-item">
+          <div class="stat-val" data-target="100" data-prefix="" data-suffix="%">—</div>
+          <div class="stat-label">leads followed up</div>
+        </div>
+        <div class="stat-row anim-item">
+          <div class="stat-val" data-target="0" data-prefix="" data-suffix="hrs">—</div>
+          <div class="stat-label">time on cold leads</div>
+        </div>
+      </div>
+    </div>
+    <p class="time-note">Your agents focus only on <strong>closing deals</strong> — not chasing unqualified leads all day.</p>
+  </div>
+
+  <!-- SLIDE 7: FEATURES -->
+  <div class="slide" id="s7">
+    <p class="feat-sub">Everything Included</p>
+    <h2 class="feat-title">What You Get</h2>
+    <div class="feat-grid">
+      <div class="feat-card anim-item">
+        <span class="fc-icon">⚡</span>
+        <div class="fc-name">Instant 24/7 Response</div>
+        <div class="fc-desc">No lead ever waits. Bot responds within seconds, round the clock.</div>
+      </div>
+      <div class="feat-card anim-item">
+        <span class="fc-icon">🎯</span>
+        <div class="fc-name">Smart Qualification</div>
+        <div class="fc-desc">Budget, location, type, timeline — all captured automatically.</div>
+      </div>
+      <div class="feat-card anim-item">
+        <span class="fc-icon">🔥</span>
+        <div class="fc-name">HOT Lead Scoring</div>
+        <div class="fc-desc">Leads scored HOT / WARM / COLD so agents know who to call first.</div>
+      </div>
+      <div class="feat-card anim-item">
+        <span class="fc-icon">📆</span>
+        <div class="fc-name">Auto Follow-Up</div>
+        <div class="fc-desc">Day 1, 3, 7 follow-ups sent automatically. Never lose a warm lead.</div>
+      </div>
+      <div class="feat-card anim-item">
+        <span class="fc-icon">📊</span>
+        <div class="fc-name">Lead Dashboard</div>
+        <div class="fc-desc">Every lead captured in a live Google Sheet. Full history, always.</div>
+      </div>
+      <div class="feat-card anim-item">
+        <span class="fc-icon">🔔</span>
+        <div class="fc-name">Agent Alerts</div>
+        <div class="fc-desc">Agents get a WhatsApp ping the moment a HOT lead is ready.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: TESTIMONIALS -->
+  <div class="slide" id="s8">
+    <p class="testi-sub">Real Results</p>
+    <h2 class="testi-title">Trusted by Agencies Across India</h2>
+    <div class="testi-scroll">
+      <div class="testi-card">
+        <div class="testi-avatar">RV</div>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"We were losing at least 5–6 leads a week just from slow replies. NestFlow fixed that overnight. Our conversion rate jumped 35% in the first month."</p>
+        <div class="testi-name">Rahul Verma</div>
+        <div class="testi-agency">Verma Properties, Delhi NCR</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-avatar">PS</div>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"My agents used to spend half their day qualifying leads on the phone. Now they only talk to serious buyers. Our team is closing more and working less."</p>
+        <div class="testi-name">Priya Shah</div>
+        <div class="testi-agency">Shah Realty Group, Mumbai</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-avatar">AK</div>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"The follow-up automation alone is worth it. We stopped manually following up and the bot handles everything. We closed 2 deals that would have gone cold."</p>
+        <div class="testi-name">Arjun Khanna</div>
+        <div class="testi-agency">Khanna Estates, Bangalore</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-avatar">MS</div>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"Setup was smooth and Apex walked us through everything. The WhatsApp bot feels very professional. Our clients are actually impressed by how fast we respond now."</p>
+        <div class="testi-name">Meera Sharma</div>
+        <div class="testi-agency">Horizon Homes, Pune</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-avatar">VN</div>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"Best investment we made this year. The ROI was clear in week two. We're now handling 3x more leads with the same team size. Highly recommend for any growing agency."</p>
+        <div class="testi-name">Vikram Nair</div>
+        <div class="testi-agency">Nair & Co. Real Estate, Chennai</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: CTA -->
+  <div class="slide" id="s9">
+    <p class="cta-eyebrow">Limited Slots Available</p>
+    <h2 class="cta-headline">Ready to stop losing leads?<br><em>Let's talk.</em></h2>
+    <p class="cta-sub">Book a free 20-minute demo. We'll show you exactly how NestFlow AI works for your agency — live, on WhatsApp.</p>
+    <div class="pricing-box anim-item">
+      <div class="pricing-row">
+        <span class="pricing-label">One-Time Setup</span>
+        <span class="pricing-val">₹25,000</span>
+      </div>
+      <div class="pricing-divider"></div>
+      <div class="pricing-row">
+        <span class="pricing-label">Monthly Retainer</span>
+        <span class="pricing-val">₹15,000<span style="font-size:14px;color:var(--muted)">/mo</span></span>
+      </div>
+    </div>
+    <a class="wa-btn" href="https://wa.me/919798513987?text=Hi%2C%20I%27m%20interested%20in%20NestFlow%20AI%20for%20my%20real%20estate%20agency.%20Can%20we%20schedule%20a%20demo%3F" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Book Free Demo on WhatsApp
+    </a>
+  </div>
+
+</div><!-- /slides-wrap -->
+
+<script>
+  const TOTAL = 9;
+  let current = 0;
+  let counting = {};
+
+  // Build progress + dots
+  const pb = document.getElementById('progressBar');
+  const nd = document.getElementById('navDots');
+  for (let i = 0; i < TOTAL; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'progress-seg';
+    seg.innerHTML = '<div class="fill"></div>';
+    pb.appendChild(seg);
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.onclick = () => goTo(i);
+    nd.appendChild(dot);
+  }
+
+  function updateUI() {
+    document.querySelectorAll('.slide').forEach((s, i) => {
+      s.classList.remove('active', 'prev');
+      if (i === current) s.classList.add('active');
+      else if (i < current) s.classList.add('prev');
+    });
+    document.querySelectorAll('.progress-seg').forEach((s, i) => {
+      s.classList.remove('done', 'active');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('active');
+    });
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+    triggerSlideEffects(current);
+  }
+
+  function nextSlide() { if (current < TOTAL - 1) { current++; updateUI(); } }
+  function prevSlide() { if (current > 0) { current--; updateUI(); } }
+  function goTo(i) { current = i; updateUI(); }
+
+  // Counter animation
+  function animateCounter(el, target, prefix, suffix, duration) {
+    const key = el.id || Math.random();
+    if (counting[key]) return;
+    counting[key] = true;
+    const start = Date.now();
+    const tick = () => {
+      const p = Math.min((Date.now() - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      const val = Math.round(ease * target);
+      el.textContent = prefix + val.toLocaleString('en-IN') + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function triggerSlideEffects(idx) {
+    // Slide 3 — cost counter
+    if (idx === 2) {
+      const el = document.getElementById('costCounter');
+      el.id = 'costCounter';
+      animateCounter(el, 80000, '₹', '', 1800);
+    }
+    // Slide 6 — stat counters
+    if (idx === 5) {
+      document.querySelectorAll('#s6 .stat-val').forEach((el, i) => {
+        const target = parseInt(el.dataset.target);
+        const prefix = el.dataset.prefix || '';
+        const suffix = el.dataset.suffix || '';
+        el.id = 's6stat' + i;
+        setTimeout(() => animateCounter(el, target, prefix, suffix, 1200), i * 150);
+      });
+    }
+  }
+
+  // Touch/swipe support
+  let touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    if (dy > 40) return;
+    if (Math.abs(dx) > 40) {
+      // On testimonials slide, only navigate if scroll is at edge
+      if (current === 7) {
+        if (dx < 0) nextSlide();
+        else if (dx > 0) prevSlide();
+      } else {
+        if (dx < 0) nextSlide(); else prevSlide();
+      }
+    }
+  }, { passive: true });
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+  });
+
+  // Init
+  updateUI();
+</script>
+</body>
+</html>
